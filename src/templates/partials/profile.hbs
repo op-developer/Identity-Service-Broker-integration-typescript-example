@@ -1,0 +1,20 @@
+<p>{{t "profile.info"}}</p>
+<h2>{{t "profile.title"}}</h2>
+<table>
+    <tr>
+        <th>{{t "profile.name"}}</th>
+        <td>{{profile.name}}</td>
+    </tr>
+    <tr>
+        <th>{{t "profile.code"}}</th>
+        <td>{{profile.personal_identity_code}}</td>
+    </tr>
+    <tr>
+        <th>{{t "profile.time"}}</th>
+        <td>{{authTime}}</td>
+    </tr>
+</table>
+
+<h3>{{t "profile.raw"}}</h3>
+<pre>{{{rawProfile}}}</pre>
+<p><a href="/logout">&laquo; {{t "profile.logout"}}</a></p>

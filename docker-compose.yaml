@@ -1,0 +1,17 @@
+version: '2'
+services:
+  demosp:
+    container_name: isb-integration-typescript-example
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    environment:
+      - ISB_HOST=isb-test.op.fi
+      - CLIENT_ID=saippuakauppias
+    volumes:
+      - ./:/opt/app
+      - /opt/app/node_modules
+      - /opt/app/dist
+    ports:
+      - "80:80"
+    restart: on-failure

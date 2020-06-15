@@ -1,0 +1,33 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <title>{{t "about.html-title"}}</title>
+        <link href="https://fonts.googleapis.com/css?family=Oswald|PT+Sans" rel="stylesheet">
+        <link href="/css/style.css" type="text/css" rel="stylesheet">
+    </head>
+    <body>
+        <div class="container">
+            <header>
+                <h1>{{t "about.title"}}</h1>
+                {{#if landing}}
+                    <p>{{t "about.info"}}</p>
+                    <p>{{t "about.examples"}}</p>
+                    <ol>
+                        {{>example-li isCurrent=hosted href="/" text=(t "hosted.title.long") }}
+                        {{>example-li isCurrent=embedded href="embedded" text=(t "embed.buttons.long") }}
+                    </ol>
+                {{/if}}
+            </header>
+
+{{#if profile}}
+{{>profile}}
+{{else if error}}
+{{>error}}
+{{else}}
+{{>example}}
+{{/if}}
+
+        </div>
+    </body>
+</html>

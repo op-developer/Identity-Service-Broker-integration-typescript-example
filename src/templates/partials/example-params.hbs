@@ -1,0 +1,29 @@
+<section class="params">
+  <h3>{{t "example.params.title"}}</h3>
+  <ul class="param-group">
+    <li>
+      <input type="checkbox" id="promptBox" name="promptBox" value="consent">
+      <label for="promptBox">
+        {{t "example.params.consent.label"}}
+        <br/>
+        <small>{{t "example.params.consent.info"}}</small>
+      </label>
+    </li>
+  </ul>
+  <ul class="param-group">
+    <li>
+      <input type="radio" name="purpose" value="normal" id="idBasic" checked>
+      <label for="idBasic">{{t "example.params.identification.basic"}}</label>
+    </li>
+
+    <li>
+      <input type="radio" name="purpose" value="weak" id="idWeak">
+      <label for="idWeak">{{t "example.params.identification.weak"}}</label>
+    </li>
+
+    <li>
+      <input type="radio" name="purpose" value="strong" id="idStrong">
+      <label for="idStrong">{{t "example.params.identification.strong"}}</label>
+    </li>
+  </ul>
+</section>

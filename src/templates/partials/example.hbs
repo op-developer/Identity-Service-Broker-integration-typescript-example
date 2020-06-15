@@ -1,0 +1,49 @@
+<form action="/oauth/authorize" method="GET" class="example">
+    {{#if hosted}}
+        {{>example-info title=(t "hosted.title.long") info=(t "hosted.info")}}
+    {{else}}
+        {{>example-info title=(t "embed.buttons.long") info=(t "embed.info")}}
+        <div class="note">
+            <p>{{t "embed.note.p"}}</p>
+            <ul>
+                <li>{{ embeddedInfo.isbConsent }}</li>
+                <li>{{ embeddedInfo.isbProviderInfo }}</li>
+            </ul>
+        </div>
+    {{/if}}
+
+    <h3 class="view-title">
+        {{t "example.title"}}
+        {{#if hosted}}
+            1: {{t "hosted.title.short"}}
+        {{else}}
+            2: {{t "embed.buttons.short"}}
+        {{/if}}
+    </h3>
+
+    <div class="view">
+        <div class="view-layout">
+            <div class="view-main">
+                {{#if hosted}}
+                    <button type="submit" class="button" value="Submit">{{t "hosted.view.cta"}}</button>
+                {{else}}
+                    <p>{{ embeddedInfo.isbConsent }}</p>
+                    {{#if embeddedInfo.disturbanceInfo}}
+                        <div class="alert -info">
+                            <h3 class="disturbanceTitle">{{embeddedInfo.disturbanceInfo.header}}</h3>
+                            <div class="disturbanceMessage">{{{embeddedInfo.disturbanceInfo.text}}}</div>
+                        </div>
+                        <p></p>
+                    {{/if}}
+                    <div class="idp-buttons">
+                        {{#each embeddedInfo.identityProviders}}
+                        {{>idp-button }}
+                        {{/each}}
+                    </div>
+                    <p>{{ embeddedInfo.isbProviderInfo }}</p>
+                {{/if}}
+            </div>
+        </div>
+        <input type="hidden" id="authenticate" name="authenticate" value="start">
+    </div>
+</form>

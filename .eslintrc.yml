@@ -1,0 +1,61 @@
+env:
+  browser: true
+  es6: true
+  node: true
+extends:
+  - 'eslint:recommended'
+  - 'plugin:@typescript-eslint/recommended'
+  - 'plugin:@typescript-eslint/eslint-recommended'
+  - 'plugin:@typescript-eslint/recommended-requiring-type-checking'
+  - 'plugin:functional/no-mutations'
+globals:
+  Atomics: readonly
+  SharedArrayBuffer: readonly
+parser: '@typescript-eslint/parser'
+parserOptions:
+  ecmaVersion: 2018
+  project: ./tsconfig.json
+  sourceType: module
+plugins:
+  - '@typescript-eslint'
+  - 'functional'
+rules:
+  # these are off
+  'functional/no-let':
+    - off
+  '@typescript-eslint/no-explicit-any':
+    - off # would be a good idea to get ready of any-types and then enable this rule
+  '@typescript-eslint/explicit-function-return-type':
+    - off
+  'functional/immutable-data':
+    - off #might be a good idea to turn on
+  '@typescript-eslint/no-unused-vars':
+    - off
+  '@typescript-eslint/no-inferrable-types':
+    - off
+  '@typescript-eslint/camelcase':
+    - off
+  '@typescript-eslint/ban-types':
+    - off
+  '@typescript-eslint/consistent-type-assertions':
+    - off
+  '@typescript-eslint/interface-name-prefix':
+    - off
+  '@typescript-eslint/triple-slash-reference':
+    - off
+  # these are on
+  functional/no-return-void: error
+  functional/no-loop-statement: error
+  eqeqeq: error
+  quotes:
+    - error
+    - double
+  semi:
+    - error
+    - always
+  linebreak-style:
+    - error
+    - unix
+  max-len:
+      - error
+      - code: 120

@@ -1,0 +1,64 @@
+{
+  "about": {
+    "html-title": "OP's Hosted identification UI",
+    "title": "Demo Service Provider",
+    "info": "OP Identity Service Broker allows Service Providers (you) to implement strong electronic identification (Finnish bank credentials, Mobile ID) easily to websites and mobile apps via single API.",
+    "examples": "This Demo Service Provider gives you three different examples how to integrate to the Identification Service Broker:"
+  },
+  "hosted": {
+    "title": {
+      "short": "Hosted UI",
+      "long": "OP’s hosted identification UI"
+    },
+    "info": "You can place a button or link or some other call-to-action into your UI which redirects the end-user to OP’s hosted identification UI along with the Open ID Connect authentication request.",
+    "view": {
+      "cta": "Identify yourself"
+    }
+  },
+  "embed": {
+    "buttons": {
+      "short": "Embedded buttons",
+      "long": "Self-hosted UI (buttons) embedded into your service"
+    },
+    "dropdown": {
+      "short": "Embedded dropdown",
+      "long": "Self-hosted UI (dropdown) embedded into your service"
+    },
+    "info": "Alternatively you can embed the indentification UI into your service and render it as you like. The end-user is redirected straight from your UI to the selected Identity Provider (bank, Mobile ID) instead of OP's hosted UI.",
+    "note": {
+      "p": "Note that it’s mandatory to display the following texts in the UI even if you embed it into you service:"
+    }
+  },
+  "example": {
+    "params": {
+      "title": "Parameters for the identification request:",
+      "consent": {
+        "label": "Require consent",
+        "info": "End-user is forced to review her personal data before returning to service."
+      },
+      "identification": {
+        "basic": "Basic identification",
+        "weak": "New weak credentials",
+        "strong": "New strong credentials"
+      }
+    },
+    "info": "After identifying herself the end-user is redirected back to the return_uri you specify in the authentication request. The consent can be set in the request as well.",
+    "api-link": "See the API docs for more information.",
+    "title": "Example UI"
+  },
+  "error": {
+    "title": "Error during identification",
+    "message": "Error message",
+    "description": "Error description",
+    "retry": "Retry"
+  },
+  "profile": {
+    "info": "The information received depends on the scope of identification request and on what attributes are available. Do note that not all sources of information have given name and family name available as separate attributes.",
+    "title": "Identification information",
+    "name": "Name",
+    "code": "Identity code",
+    "time": "Time of authentication",
+    "raw": "Raw data",
+    "logout": "Log out"
+  }
+}
