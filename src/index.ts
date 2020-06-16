@@ -32,7 +32,7 @@ internals.start = async function () {
             }
         });
       } catch (err) {
-          logger.error("dsp.register.yar", `registration failed: ${err.message}`,
+          logger.error("dsp.register.yar", `registration failed: ${<string>err.message}`,
             logger.LogGroup.Technical, undefined);
       }
 
@@ -40,7 +40,7 @@ internals.start = async function () {
         await server.register(Vision);
     }
     catch (err) {
-        logger.error("dsp.register.vision", `registration failed: ${err.message}`,
+        logger.error("dsp.register.vision", `registration failed: ${<string>err.message}`,
         logger.LogGroup.Technical, undefined);
     }
 
@@ -48,7 +48,7 @@ internals.start = async function () {
         await server.register(Inert);
     }
     catch (err) {
-        logger.error("dsp.register.inert", `registration failed: ${err.message}`,
+        logger.error("dsp.register.inert", `registration failed: ${<string>err.message}`,
             logger.LogGroup.Technical, undefined);
     }
 
@@ -59,7 +59,7 @@ internals.start = async function () {
     try {
         privateKeys = await getDSPKeys();
     } catch (error) {
-        logger.error("dsp.keys.error", `fetching keys failed ${error.message}`,
+        logger.error("dsp.keys.error", `fetching keys failed ${<string>error.message}`,
               logger.LogGroup.Technical, undefined);
         privateKeys = {
             encyptionKey: " ",
@@ -104,7 +104,7 @@ internals.start = async function () {
         try {
             await keyStore.add(privateKeys.signingKey, "pem", {use: "sig"});
             await keyStore.add(privateKeys.encyptionKey, "pem", {use: "enc"});
-            return keyStore.toJSON();
+            return <object>keyStore.toJSON();
         } catch (error) {
             logger.error("dsp.jwks.error", error.message,
             logger.LogGroup.Technical, undefined);
@@ -127,7 +127,7 @@ internals.start = async function () {
         };
         const payloadJSON = JSON.stringify(payload);
         const signingKey = await jose.JWK.asKey(privateKeys.signingKey, "pem");
-        return jose.JWS.createSign({ format: "compact" }, signingKey).final(payloadJSON, "utf-8");
+        return <string>jose.JWS.createSign({ format: "compact" }, signingKey).final(payloadJSON, "utf-8");
     }
 
     /**
@@ -173,7 +173,7 @@ internals.start = async function () {
         }
         const payloadJSON = JSON.stringify(payload);
         const signingKey = await jose.JWK.asKey(privateKeys.signingKey, "pem");
-        return jose.JWS.createSign({ format: "compact" }, signingKey).final(payloadJSON, "utf-8");
+        return <string>jose.JWS.createSign({ format: "compact" }, signingKey).final(payloadJSON, "utf-8");
     }
 
     /**
@@ -190,7 +190,7 @@ internals.start = async function () {
             return keyStore;
         })
         .catch((err) => {
-            logger.error("dsp.getISBSigningKey.fail", `getting ISB signing key failed: ${err.message}`,
+            logger.error("dsp.getISBSigningKey.fail", `getting ISB signing key failed: ${<string>err.message}`,
                 logger.LogGroup.Technical, undefined);
             return null;
         });
@@ -220,12 +220,12 @@ internals.start = async function () {
                 const verificationResult = await jose.JWS.createVerify(isbKeyStore).verify(decrypted);
                 return verificationResult.payload.toString();
             } catch (err) {
-                logger.error("dsp.verifying.fail", `Verification failed: ${err.message}`,
+                logger.error("dsp.verifying.fail", `Verification failed: ${<string>err.message}`,
                     logger.LogGroup.Technical, undefined);
                 return "{\"err\":\"Could not verify token\"}";
             }
         } catch (err) {
-            logger.info("dsp.decrypting.keyfail", `decrypt failed: ${err.message}`,
+            logger.info("dsp.decrypting.keyfail", `decrypt failed: ${<string>err.message}`,
                 logger.LogGroup.Technical, undefined,
                 {error: err, token, key: privateKeys.encyptionKey});
         }
@@ -246,6 +246,9 @@ internals.start = async function () {
         backend: {
             loadPath: __dirname + "/locales/{{lng}}/{{ns}}.json"
         }
+    }).catch((error) => {
+        logger.error("dsp.i18next.init.fail", `I18next init failed: ${<string>error.message}`,
+                    logger.LogGroup.Technical, undefined);
     });
 
     // i18next translate helper
@@ -276,7 +279,7 @@ internals.start = async function () {
                 }
             }
             catch (err) {
-                logger.error("dsp.auth.fail", `making JSW token for auth failed: ${err.message}`,
+                logger.error("dsp.auth.fail", `making JSW token for auth failed: ${<string>err.message}`,
                     logger.LogGroup.Technical, undefined);
                 request.yar.set("error", err.message);
                 return h.view("template", { error: err.message });
@@ -371,7 +374,7 @@ internals.start = async function () {
                                 })
                                 .catch((err) => {
                                     logger.error("dsp.tokenresponse.fail",
-                                        `decrypt token failed: ${err.message}`,
+                                        `decrypt token failed: ${<string>err.message}`,
                                         logger.LogGroup.Technical, undefined);
                                     request.yar.set("error", err.message);
                                     return h
@@ -381,7 +384,7 @@ internals.start = async function () {
                         })
                         .catch((err) => {
                             logger.error("dsp.tokenresponse.fail",
-                                `error in ISB oauth/token communication: ${err.message}`,
+                                `error in ISB oauth/token communication: ${<string>err.message}`,
                                 logger.LogGroup.Technical, undefined);
                             request.yar.set("error", err.message);
                             return h
@@ -390,7 +393,7 @@ internals.start = async function () {
                         });
                 })
                 .catch((err) => {
-                    logger.error("dsp.auth.fail", `making JSW token for auth failed: ${err.message}`,
+                    logger.error("dsp.auth.fail", `making JSW token for auth failed: ${<string>err.message}`,
                             logger.LogGroup.Technical, undefined);
                     request.yar.set("error", err.message);
                     return h.view(
@@ -466,7 +469,7 @@ internals.start = async function () {
             const rawProfile = JSON.stringify(profile, null, 2) || null;
             const authTime: string | null = profile && profile.auth_time ? getFormattedTime(profile.auth_time) : null;
 
-            const lang = request.query.lang ? request.query.lang : "en";
+            const lang = request.query.lang ? <string>request.query.lang : "en";
             request.yar.set("lang", lang);
             let embeddedInfo: EmbeddedUIData;
             if (error === null && profile === null ) {
@@ -532,7 +535,7 @@ internals.start = async function () {
         await server.start();
     }
     catch (err) {
-        logger.error("dsp.server.fail", `server did not start: ${err.message}`,
+        logger.error("dsp.server.fail", `server did not start: ${<string>err.message}`,
             logger.LogGroup.Technical, undefined);
     }
 };

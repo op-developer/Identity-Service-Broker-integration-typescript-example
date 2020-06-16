@@ -43,6 +43,14 @@ rules:
     - off
   '@typescript-eslint/triple-slash-reference':
     - off
+  '@typescript-eslint/no-unsafe-member-access':
+    - off
+  '@typescript-eslint/no-unsafe-assignment':
+    - off
+  '@typescript-eslint/no-unsafe-call':
+    - off
+  '@typescript-eslint/no-unsafe-return':
+    - off
   # these are on
   functional/no-return-void: error
   functional/no-loop-statement: error

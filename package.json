@@ -24,29 +24,29 @@
     "@hapi/yar": "10.1.0",
     "@types/hapi__hapi": "^19.0.3",
     "@types/hapi__inert": "5.2.0",
-    "@types/hapi__joi": "17.1.0",
+    "@types/hapi__joi": "17.1.2",
     "@types/hapi__vision": "5.5.1",
     "@types/hapi__yar": "9.2.0",
     "@types/i18next-node-fs-backend": "2.1.0",
     "@types/node": "12.12.31",
-    "@types/uuid": "7.0.3",
+    "@types/uuid": "8.0.0",
     "checkout-logger": "github:CheckoutFinland/checkout-logger",
     "crypto-random-string": "^3.2.0",
     "handlebars": "^4.7.6",
-    "i18next": "^19.4.4",
+    "i18next": "^19.4.5",
     "i18next-node-fs-backend": "^2.1.3",
     "node-jose": "1.1.4",
     "node-sass": "^4.14.1",
     "nodemon": "2.0.4",
     "npm-run-all": "^4.1.5",
-    "ts-node": "8.10.1",
-    "typescript": "^3.9.2",
-    "uuid": "^8.0.0"
+    "ts-node": "8.10.2",
+    "typescript": "^3.9.5",
+    "uuid": "^8.1.0"
   },
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^2.34.0",
-    "@typescript-eslint/parser": "^2.34.0",
-    "eslint": "^7.0.0",
+    "@typescript-eslint/eslint-plugin": "^3.3.0",
+    "@typescript-eslint/parser": "^3.3.0",
+    "eslint": "^7.2.0",
     "eslint-plugin-functional": "^3.0.1"
   }
 }
