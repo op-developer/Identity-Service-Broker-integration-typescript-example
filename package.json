@@ -18,35 +18,35 @@
     "develop:locales": "nodemon --ext json --watch src/locales --exec npm run -- build:locales"
   },
   "dependencies": {
-    "@hapi/hapi": "^19.2.0",
-    "@hapi/inert": "^6.0.1",
+    "@hapi/hapi": "^20.0.0",
+    "@hapi/inert": "^6.0.2",
     "@hapi/vision": "6.0.0",
-    "@hapi/yar": "10.1.0",
-    "@types/hapi__hapi": "^19.0.3",
+    "@hapi/yar": "10.1.1",
+    "@types/hapi__hapi": "^20.0.0",
     "@types/hapi__inert": "5.2.0",
     "@types/hapi__joi": "17.1.4",
     "@types/hapi__vision": "5.5.1",
     "@types/hapi__yar": "9.2.0",
     "@types/i18next-node-fs-backend": "2.1.0",
     "@types/node": "12.12.31",
-    "@types/uuid": "8.0.0",
+    "@types/uuid": "8.3.0",
     "checkout-logger": "github:CheckoutFinland/checkout-logger",
-    "crypto-random-string": "^3.2.0",
+    "crypto-random-string": "^3.3.0",
     "handlebars": "^4.7.6",
-    "i18next": "^19.6.2",
+    "i18next": "^19.7.0",
     "i18next-node-fs-backend": "^2.1.3",
-    "node-jose": "1.1.4",
+    "node-jose": "2.0.0",
     "node-sass": "^4.14.1",
     "nodemon": "2.0.4",
     "npm-run-all": "^4.1.5",
-    "ts-node": "8.10.2",
-    "typescript": "^3.9.7",
-    "uuid": "^8.2.0"
+    "ts-node": "9.0.0",
+    "typescript": "^4.0.3",
+    "uuid": "^8.3.0"
   },
   "devDependencies": {
-    "@typescript-eslint/eslint-plugin": "^3.7.0",
-    "@typescript-eslint/parser": "^3.7.0",
-    "eslint": "^7.5.0",
-    "eslint-plugin-functional": "^3.0.1"
+    "@typescript-eslint/eslint-plugin": "^4.1.1",
+    "@typescript-eslint/parser": "^4.1.1",
+    "eslint": "^7.9.0",
+    "eslint-plugin-functional": "^3.0.2"
   }
 }
