@@ -35,6 +35,8 @@ export const embeddedInfoSchema = Joi.object().keys({
     ),
     isbProviderInfo: Joi.string().required(),
     isbConsent: Joi.string().required(),
+    privacyNoticeText: Joi.string().required(),
+    privacyNoticeLink: Joi.string().required(),
     disturbanceInfo: Joi.object().keys({header: Joi.string(), text: Joi.string()})
 });
 
