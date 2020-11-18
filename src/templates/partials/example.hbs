@@ -8,6 +8,7 @@
             <ul>
                 <li>{{ embeddedInfo.isbConsent }}</li>
                 <li>{{ embeddedInfo.isbProviderInfo }}</li>
+                <li><a href={{ embeddedInfo.privacyNoticeLink }} target="_blank">{{ embeddedInfo.privacyNoticeText }}</a></li>
             </ul>
         </div>
     {{/if}}
@@ -27,7 +28,8 @@
                 {{#if hosted}}
                     <button type="submit" class="button" value="Submit">{{t "hosted.view.cta"}}</button>
                 {{else}}
-                    <p>{{ embeddedInfo.isbConsent }}</p>
+                    <p class="view-left">{{ embeddedInfo.isbConsent }}</p>
+                    <p class="view-left"><a href={{ embeddedInfo.privacyNoticeLink }} target="_blank">{{ embeddedInfo.privacyNoticeText }}</a></p>
                     {{#if embeddedInfo.disturbanceInfo}}
                         <div class="alert -info">
                             <h3 class="disturbanceTitle">{{embeddedInfo.disturbanceInfo.header}}</h3>
@@ -40,7 +42,7 @@
                         {{>idp-button }}
                         {{/each}}
                     </div>
-                    <p>{{ embeddedInfo.isbProviderInfo }}</p>
+                    <p class="view-left">{{ embeddedInfo.isbProviderInfo }}</p>
                 {{/if}}
             </div>
         </div>
