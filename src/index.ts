@@ -76,7 +76,7 @@ internals.start = async function () {
     /**
      * date and time formatting options
      */
-    const options = {
+    const options: Intl.DateTimeFormatOptions = {
         day: "numeric",
         month: "long",
         hour: "numeric",
