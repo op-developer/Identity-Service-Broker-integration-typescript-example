@@ -2,7 +2,6 @@ import * as fs from "fs";
 import * as http from "http";
 import * as https from "https";
 import i18next from "i18next";
-import * as url from "url";
 import * as Joi from "@hapi/joi";
 
 import logger = require("checkout-logger");
@@ -57,12 +56,13 @@ export async function httpGetJson(
     parseResult: boolean = true,
     headers: { readonly [key: string]: string }): Promise<object | string> {
 
+    // eslint-disable-next-line functional/no-return-void
     return new Promise<any>((accept, reject) => {
-        const parsedUrl = url.parse(endpointUrl);
+        const parsedUrl: URL = new URL(endpointUrl);
         const options: http.RequestOptions = {
             hostname: parsedUrl.hostname,
             port: parsedUrl.port ? Number(parsedUrl.port) : 443,
-            path: parsedUrl.path,
+            path: parsedUrl.pathname,
             method: "GET",
             timeout: 5000,  // 5 seconds
             headers: {
@@ -71,13 +71,14 @@ export async function httpGetJson(
         };
 
         let req: http.ClientRequest;
+        // eslint-disable-next-line functional/no-return-void
         const callback = (response: http.IncomingMessage) => {
             let result = "";
-
+            // eslint-disable-next-line functional/no-return-void
             response.on("data", (chunk: Buffer) => {
                 result += chunk;
             });
-
+            // eslint-disable-next-line functional/no-return-void
             response.on("end", () => {
                 if (response.statusCode === 404) {
                     logger.debug("dsp.http-get.response.not-found",
@@ -98,14 +99,14 @@ export async function httpGetJson(
                         }
                     }
                     catch (error) {
-                        logger.error("dsp.http-get.response.faulty", error.toString(), logger.LogGroup.Technical,
-                                  undefined, {result, endpointUrl });
+                        logger.error("dsp.http-get.response.faulty", <string>error.toString(),
+                            logger.LogGroup.Technical, undefined, {result, endpointUrl });
                         return reject(error);
                     }
                     accept(finalResult);
                 }
             });
-
+            // eslint-disable-next-line functional/no-return-void
             response.on("error", (error: Error) => {
                 logger.error("dsp.http-get.response.error", error.toString(), logger.LogGroup.Technical,
                           undefined, {endpointUrl});
@@ -121,17 +122,19 @@ export async function httpGetJson(
             } else {
                 throw new Error("Unsupported api endpoint protocol");
             }
+            // eslint-disable-next-line functional/no-return-void
             req.on("error", function(error: Error) {
                 logger.error("dsp.http-get.request.error", error.toString(), logger.LogGroup.Technical,
                           undefined, {endpointUrl});
                 return reject(error);
             });
+            // eslint-disable-next-line functional/no-return-void
             req.on("timeout", () => {
-                 req.abort();
+                 req.destroy();
              });
             req.end();
         } catch (err) {
-            logger.error("dsp.http-get.response.error", err.toString(), logger.LogGroup.Technical,
+            logger.error("dsp.http-get.response.error", <string>err.toString(), logger.LogGroup.Technical,
                           undefined, {endpointUrl});
             return reject(err);
         }
@@ -162,6 +165,7 @@ export async function httpPostFormUrlEncoded(
    // Goes through the payload and formats the data as string in &key=data format
    // data is also URI encoded
    try {
+       // eslint-disable-next-line functional/no-return-void
        Object.keys(payload).forEach(key => {
             data = (data ? data + "&" : "") + key + "=" + encodeURIComponent(payload[key]);
        });
@@ -182,9 +186,9 @@ export async function httpPostFormUrlEncoded(
                endpointUrl
            }
        );
-
-   return new Promise<any>((accept, reject) => {
-       const parsedUrl = url.parse(endpointUrl);
+    // eslint-disable-next-line functional/no-return-void
+    return new Promise<any>((accept, reject) => {
+        const parsedUrl: URL = new URL(endpointUrl);
 
        const options: https.RequestOptions = {
            hostname: parsedUrl.hostname,
@@ -199,19 +203,21 @@ export async function httpPostFormUrlEncoded(
        };
 
        let req: http.ClientRequest;
+       // eslint-disable-next-line functional/no-return-void
        const callback = (response: http.IncomingMessage) => {
            let result = "";
+           // eslint-disable-next-line functional/no-return-void
            response.on("data", (chunk: Buffer) => {
                result += chunk;
            });
-
+           // eslint-disable-next-line functional/no-return-void
            response.on("end", () => {
                let finalResult: Object;
                try {
                    finalResult = JSON.parse(result);
                }
                catch (error) {
-                   log.warn("dsp.http-post.form.response.faulty", error.toString(),
+                   log.warn("dsp.http-post.form.response.faulty", <string>error.toString(),
                        logger.LogGroup.Technical, undefined,
                        {
                            payload,
@@ -224,7 +230,7 @@ export async function httpPostFormUrlEncoded(
                }
                accept(finalResult);
            });
-
+           // eslint-disable-next-line functional/no-return-void
            response.on("error", (error: Error) => {
                log.warn("dsp.http-post.form.response.error", error.toString(),
                    logger.LogGroup.Technical, undefined,
@@ -247,6 +253,7 @@ export async function httpPostFormUrlEncoded(
                throw new Error("Unsupported api endpoint protocol");
            }
            req.write(data);
+           // eslint-disable-next-line functional/no-return-void
            req.on("error", function (error: Error) {
                log.warn("dsp.http-post.form.request.error", error.toString(),
                    logger.LogGroup.Technical, undefined,
@@ -257,8 +264,9 @@ export async function httpPostFormUrlEncoded(
                );
                return reject(error);
            });
+           // eslint-disable-next-line functional/no-return-void
            req.on("timeout", () => {
-               req.abort();
+               req.destroy();
            });
            req.end();
        } catch (err) {
@@ -299,7 +307,7 @@ export function getDSPKeys(logSpan?: logger.LogSpan): Promise<DspPrivateKeys> {
         };
         return Promise.resolve(privateKeys);
     } catch (error) {
-        log.error("dsp.utils.getDSPKeys.file.error", error.message, logger.LogGroup.Technical,
+        log.error("dsp.utils.getDSPKeys.file.error", <string>error.message, logger.LogGroup.Technical,
             undefined, {error: error.toString()});
         throw error;
     }

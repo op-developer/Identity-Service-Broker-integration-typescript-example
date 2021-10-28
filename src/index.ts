@@ -12,6 +12,11 @@ import {
     HttpPostUrlEncodedData, httpPostFormUrlEncoded, translate, DspPrivateKeys
 } from "./utils";
 
+interface TokenResponse {
+    readonly id_token: string;
+    readonly [key:string]: any;
+}
+
 const internals: any = {};
 
 
@@ -106,7 +111,7 @@ internals.start = async function () {
             await keyStore.add(privateKeys.encyptionKey, "pem", {use: "enc"});
             return <object>keyStore.toJSON();
         } catch (error) {
-            logger.error("dsp.jwks.error", error.message,
+            logger.error("dsp.jwks.error", <string>error.message,
             logger.LogGroup.Technical, undefined);
             return {};
         }
@@ -240,12 +245,12 @@ internals.start = async function () {
     });
 
     i18next.use(i18nBackend).init({
-        whitelist: ["en", "fi", "sv"],
         preload: ["en", "fi", "sv"],
         fallbackLng: "en",
         backend: {
             loadPath: __dirname + "/locales/{{lng}}/{{ns}}.json"
         }
+    // eslint-disable-next-line functional/no-return-void
     }).catch((error) => {
         logger.error("dsp.i18next.init.fail", `I18next init failed: ${<string>error.message}`,
                     logger.LogGroup.Technical, undefined);
@@ -272,7 +277,7 @@ internals.start = async function () {
                     return h.redirect(authUrl);
                 }
                 catch (err) {
-                    logger.error("dsp.oauth.authorize", err.message,
+                    logger.error("dsp.oauth.authorize", <string>err.message,
                         logger.LogGroup.Technical, undefined);
                     request.yar.set("error", err.message);
                     return h.view("template", { error: err.message });
@@ -344,7 +349,7 @@ internals.start = async function () {
                         `https://${isbHost}/oauth/token`,
                         {"Content-Type": "application/x-www-form-urlencoded"},
                         data)
-                        .then((tokenResponse) => {
+                        .then((tokenResponse: TokenResponse) => {
                             logger.debug(
                                 "dsp.tokenresponse", "Token response",
                                 logger.LogGroup.Technical, undefined,
@@ -441,7 +446,8 @@ internals.start = async function () {
             request.yar.clear("nonce");
             request.yar.set("mode", "normal");
             const rawProfile = JSON.stringify(profile, null, 2) || null;
-            const authTime: string | null = profile && profile.auth_time ? getFormattedTime(profile.auth_time) : null;
+            const authTime: string | null = profile && profile.auth_time ?
+                getFormattedTime(<number>profile.auth_time) : null;
 
             const hosted = true;
             const landing = !profile && !error;
@@ -467,7 +473,8 @@ internals.start = async function () {
             request.yar.clear("state");
             request.yar.clear("nonce");
             const rawProfile = JSON.stringify(profile, null, 2) || null;
-            const authTime: string | null = profile && profile.auth_time ? getFormattedTime(profile.auth_time) : null;
+            const authTime: string | null = profile && profile.auth_time ?
+                getFormattedTime(<number>profile.auth_time) : null;
 
             const lang = request.query.lang ? <string>request.query.lang : "en";
             request.yar.set("lang", lang);
