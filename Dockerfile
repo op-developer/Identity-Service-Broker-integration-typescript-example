@@ -1,4 +1,4 @@
-FROM node:16.13-buster
+FROM node:16.14-buster
 EXPOSE 80
 
 WORKDIR /opt/app
