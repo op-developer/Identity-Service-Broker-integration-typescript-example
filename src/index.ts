@@ -11,6 +11,7 @@ import {
     getDSPKeys, httpGetJson, EmbeddedUIData, embeddedInfoSchema,
     HttpPostUrlEncodedData, httpPostFormUrlEncoded, translate, DspPrivateKeys
 } from "./utils";
+import { getEntityStatement, getISBSigningKey, getSignedJwks } from "./key-management";
 
 interface TokenResponse {
     readonly id_token: string;
@@ -68,7 +69,9 @@ internals.start = async function () {
               logger.LogGroup.Technical, undefined);
         privateKeys = {
             encyptionKey: " ",
-            signingKey: " "
+            signingKey: " ",
+            entityKey: " ",
+            isbEntitySigningKey: " "
         };
     }
 
@@ -97,24 +100,6 @@ internals.start = async function () {
      */
     function getFormattedTime(unixTime: number): string {
         return new Date(unixTime * 1000).toLocaleString("en-US", options);
-    }
-
-     /**
-     * Get JWKS data for the SP
-     *
-     * @return {Promise<json>}
-     */
-    async function getJwks(): Promise<JsonWebKey> {
-        const keyStore = jose.JWK.createKeyStore();
-        try {
-            await keyStore.add(privateKeys.signingKey, "pem", {use: "sig"});
-            await keyStore.add(privateKeys.encyptionKey, "pem", {use: "enc"});
-            return <object>keyStore.toJSON();
-        } catch (error) {
-            logger.error("dsp.jwks.error", <string>error.message,
-            logger.LogGroup.Technical, undefined);
-            return {};
-        }
     }
 
     /**
@@ -165,6 +150,17 @@ internals.start = async function () {
             payload["prompt"] = "consent";
         }
 
+        // set the ftn_spname if given in the form
+        if (request.query.spname) {
+            // Remove whole text from point of html detection
+            payload["ftn_spname"] = request.query.spname.replace(/<(?:.|\n)*/gm, "");
+            if (payload["ftn_spname"] === "") {
+                // spname with html has been added and replaced with empty string.
+                // remove the whole key
+                delete payload["ftn_spname"];
+            }
+        }
+
         if (request.query.idButton) {
             payload["ftn_idp_id"] = request.query.idButton;
         }
@@ -179,26 +175,6 @@ internals.start = async function () {
         const payloadJSON = JSON.stringify(payload);
         const signingKey = await jose.JWK.asKey(privateKeys.signingKey, "pem");
         return <string>jose.JWS.createSign({ format: "compact" }, signingKey).final(payloadJSON, "utf-8");
-    }
-
-    /**
-     * Read ISB public signing key from the ISB JWKS endpoint and store it to keyStore
-     *
-     * @return {Promise<string>} signing key for ISB
-     */
-    async function getISBSigningKey(): Promise<string> {
-        const isbKeyInfo = await httpGetJson(`https://${isbHost}/jwks/broker`, true, null ) as object;
-        return await jose.JWK.asKeyStore(isbKeyInfo)
-        .then((keyStore) => {
-            // set refresh time one hour from now.
-            isbSigningKeyRefreshTime = Date.now() + 1000 * 60 * 60;
-            return keyStore;
-        })
-        .catch((err) => {
-            logger.error("dsp.getISBSigningKey.fail", `getting ISB signing key failed: ${<string>err.message}`,
-                logger.LogGroup.Technical, undefined);
-            return null;
-        });
     }
 
     /**
@@ -220,7 +196,10 @@ internals.start = async function () {
             try {
                 if (Date.now() > isbSigningKeyRefreshTime) {
                     // Refresh ISB signing key
-                    isbKeyStore = await getISBSigningKey();
+                    let exp: number;
+                    [isbKeyStore, exp] = await getISBSigningKey(privateKeys,isbHost);
+                    // set refresh time according to ISB JWKS exp
+                    isbSigningKeyRefreshTime = exp * 1000;
                 }
                 const verificationResult = await jose.JWS.createVerify(isbKeyStore).verify(decrypted);
                 return verificationResult.payload.toString();
@@ -482,7 +461,13 @@ internals.start = async function () {
             if (error === null && profile === null ) {
                 const embeddedUri = `https://${isbHost}/api/embedded-ui/${clientId}?lang=${lang}`;
                 try {
-                    const embeddedDataString: string = await httpGetJson(embeddedUri, false, null ) as string;
+                    const embeddedDataString: string = await httpGetJson(
+                        embeddedUri,
+                        false,
+                        {
+                            "Content-Type": "application/json"
+                        }
+                    ) as string;
                     embeddedInfo = JSON.parse(embeddedDataString
                         .replace(/<(?:.|\n)*?>/gm, "") // Remove html tags
                         // replace \r and \n with <br><br> to handle multi-line disturbance notifications
@@ -511,9 +496,18 @@ internals.start = async function () {
 
     server.route({
         method: "GET",
-        path: "/jwks",
+        path: "/signed-jwks",
         handler: async (request, h) => {
-            return h.response(await getJwks()).type("application/json");
+            return h.response(await getSignedJwks(privateKeys, request.info.host)).type("application/jose");
+        }
+    });
+
+    server.route({
+        method: "GET",
+        path: "/.well-known/openid-federation",
+        handler: async (request, h) => {
+            return h.response(await getEntityStatement(privateKeys,request.info.host))
+            .type("application/entity-statement+jwt");
         }
     });
 
@@ -531,7 +525,7 @@ internals.start = async function () {
     server.route({
         method: "GET",
         path: "/robots.txt",
-        handler: (req, h) => {
+        handler: (_req, h) => {
             return h
                 .response("User-agent: *\nDisallow: /\n")
                 .type("text/plain");
