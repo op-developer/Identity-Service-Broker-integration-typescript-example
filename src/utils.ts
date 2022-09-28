@@ -66,10 +66,12 @@ export async function httpGetJson(
     // eslint-disable-next-line functional/no-return-void
     return new Promise<any>((accept, reject) => {
         const parsedUrl: URL = new URL(endpointUrl);
+        const queryParams: string = parsedUrl.searchParams.toString() ?
+            `?${parsedUrl.searchParams.toString()}` : "";
         const options: http.RequestOptions = {
             hostname: parsedUrl.hostname,
             port: parsedUrl.port ? Number(parsedUrl.port) : 443,
-            path: parsedUrl.pathname,
+            path: parsedUrl.pathname + queryParams,
             method: "GET",
             timeout: 5000,  // 5 seconds
             headers: {

@@ -18,6 +18,12 @@ interface TokenResponse {
     readonly [key:string]: any;
 }
 
+interface Spname {
+    readonly fi:string;
+    readonly sv:string;
+    readonly en:string;
+}
+
 const internals: any = {};
 
 
@@ -60,6 +66,7 @@ internals.start = async function () {
 
     const isbHost = process.env["ISB_HOST"] || undefined;
     const clientId = process.env["CLIENT_ID"] || undefined;
+    const spnameJson: Spname = JSON.parse(process.env["SPNAME"]) || {en: "soap merchant"};
 
     let privateKeys: DspPrivateKeys ;
     try {
@@ -142,23 +149,17 @@ internals.start = async function () {
             scope: "openid profile personal_identity_code"
         };
 
+        // set the default ftn_spname
+        payload["ftn_spname"] = spnameJson.en;
+
         if (request.yar.get("lang")) {
             payload["ui_locales"] = request.yar.get("lang"); // set language
+            // set also localised ftn_spname
+            payload["ftn_spname"] = spnameJson[request.yar.get("lang")] || spnameJson.en;
         }
 
         if (request.query.promptBox) {
             payload["prompt"] = "consent";
-        }
-
-        // set the ftn_spname if given in the form
-        if (request.query.spname) {
-            // Remove whole text from point of html detection
-            payload["ftn_spname"] = request.query.spname.replace(/<(?:.|\n)*/gm, "");
-            if (payload["ftn_spname"] === "") {
-                // spname with html has been added and replaced with empty string.
-                // remove the whole key
-                delete payload["ftn_spname"];
-            }
         }
 
         if (request.query.idButton) {
@@ -430,6 +431,9 @@ internals.start = async function () {
 
             const hosted = true;
             const landing = !profile && !error;
+
+            const lang = request.query.lang ? <string>request.query.lang : "en";
+            request.yar.set("lang", lang);
 
             const returnUrl = "/";
             return h.view(

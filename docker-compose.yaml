@@ -8,6 +8,7 @@ services:
     environment:
       - ISB_HOST=isb-test.op.fi
       - CLIENT_ID=saippuakauppias
+      - 'SPNAME={"fi":"saippuakauppias", "sv":"tvålhandlare","en":"soap merchant"}'
     volumes:
       - ./:/opt/app
       - /opt/app/node_modules
