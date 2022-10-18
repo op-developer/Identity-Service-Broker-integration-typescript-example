@@ -107,7 +107,7 @@ export async function getEntityStatement(
     try {
         const now = Math.floor(Date.now() / 1000);
         const keyStore = jose.JWK.createKeyStore();
-        await keyStore.add(privateKeys.signingKey, "pem", {use: "sig"});
+        await keyStore.add(privateKeys.entityKey, "pem", {use: "sig"});
         const entityStatement = {
             iss: `https://${host}`,
             sub: `https://${host}`,
