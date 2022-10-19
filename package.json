@@ -31,7 +31,7 @@
     "@types/i18next-node-fs-backend": "2.1.1",
     "@types/node": "18.7.18",
     "@types/uuid": "8.3.4",
-    "checkout-logger": "github:Heikkohoo/checkout-logger",
+    "checkout-logger": "github:Heikkohoo/checkout-logger#2013f393b72e6e11366cb1a2cbe945b03cbf2160",
     "crypto-random-string": "^3.3.1",
     "handlebars": "^4.7.7",
     "i18next": "^21.9.2",
