@@ -132,7 +132,7 @@ export async function getEntityStatement(
                 }
             }
         };
-        entityStatement.jwks.keys.push(keyStore.toJSON()); // add the public part of the signing key(s)
+        entityStatement.jwks = keyStore.toJSON(); // add the public part of the signing key(s)
         return await  jose.JWS.createSign(
             { fields: {
                 alg: "RS256",

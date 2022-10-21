@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as http from "http";
 import * as https from "https";
 import i18next from "i18next";
-import * as Joi from "@hapi/joi";
+import * as Joi from "joi";
 
 import * as logger from "checkout-logger";
 

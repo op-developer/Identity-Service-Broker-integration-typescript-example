@@ -2,7 +2,7 @@ import * as logger from "checkout-logger";
 import Crypto from "crypto-random-string";
 import * as Hapi from "@hapi/hapi";
 import i18next from "i18next";
-import i18nBackend from "i18next-node-fs-backend";
+import i18nBackend from "i18next-fs-backend";
 import * as jose from "node-jose";
 import * as uuid from "uuid";
 import * as Vision from "@hapi/vision";
