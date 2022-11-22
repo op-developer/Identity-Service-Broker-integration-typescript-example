@@ -66,7 +66,7 @@ internals.start = async function () {
 
     const isbHost = process.env["ISB_HOST"] || undefined;
     const clientId = process.env["CLIENT_ID"] || undefined;
-    const spnameJson: Spname = JSON.parse(process.env["SPNAME"]) || {en: "soap merchant"};
+    const spnameJson: Spname = JSON.parse(process.env["SPNAME"]) || {en: "Soap for the people"};
 
     let privateKeys: DspPrivateKeys ;
     try {
