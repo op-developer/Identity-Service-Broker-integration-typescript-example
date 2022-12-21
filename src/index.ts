@@ -2,7 +2,7 @@ import * as logger from "checkout-logger";
 import Crypto from "crypto-random-string";
 import * as Hapi from "@hapi/hapi";
 import i18next from "i18next";
-import i18nBackend from "i18next-node-fs-backend";
+import i18nBackend from "i18next-fs-backend";
 import * as jose from "node-jose";
 import * as uuid from "uuid";
 import * as Vision from "@hapi/vision";
@@ -11,10 +11,17 @@ import {
     getDSPKeys, httpGetJson, EmbeddedUIData, embeddedInfoSchema,
     HttpPostUrlEncodedData, httpPostFormUrlEncoded, translate, DspPrivateKeys
 } from "./utils";
+import { getEntityStatement, getISBSigningKey, getSignedJwks } from "./key-management";
 
 interface TokenResponse {
     readonly id_token: string;
     readonly [key:string]: any;
+}
+
+interface Spname {
+    readonly fi:string;
+    readonly sv:string;
+    readonly en:string;
 }
 
 const internals: any = {};
@@ -59,6 +66,7 @@ internals.start = async function () {
 
     const isbHost = process.env["ISB_HOST"] || undefined;
     const clientId = process.env["CLIENT_ID"] || undefined;
+    const spnameJson: Spname = JSON.parse(process.env["SPNAME"]) || {en: "Soap for the people"};
 
     let privateKeys: DspPrivateKeys ;
     try {
@@ -68,7 +76,9 @@ internals.start = async function () {
               logger.LogGroup.Technical, undefined);
         privateKeys = {
             encyptionKey: " ",
-            signingKey: " "
+            signingKey: " ",
+            entityKey: " ",
+            isbEntitySigningKey: " "
         };
     }
 
@@ -97,24 +107,6 @@ internals.start = async function () {
      */
     function getFormattedTime(unixTime: number): string {
         return new Date(unixTime * 1000).toLocaleString("en-US", options);
-    }
-
-     /**
-     * Get JWKS data for the SP
-     *
-     * @return {Promise<json>}
-     */
-    async function getJwks(): Promise<JsonWebKey> {
-        const keyStore = jose.JWK.createKeyStore();
-        try {
-            await keyStore.add(privateKeys.signingKey, "pem", {use: "sig"});
-            await keyStore.add(privateKeys.encyptionKey, "pem", {use: "enc"});
-            return <object>keyStore.toJSON();
-        } catch (error) {
-            logger.error("dsp.jwks.error", <string>error.message,
-            logger.LogGroup.Technical, undefined);
-            return {};
-        }
     }
 
     /**
@@ -157,8 +149,13 @@ internals.start = async function () {
             scope: "openid profile personal_identity_code"
         };
 
+        // set the default ftn_spname
+        payload["ftn_spname"] = spnameJson.en;
+
         if (request.yar.get("lang")) {
             payload["ui_locales"] = request.yar.get("lang"); // set language
+            // set also localised ftn_spname
+            payload["ftn_spname"] = spnameJson[request.yar.get("lang")] || spnameJson.en;
         }
 
         if (request.query.promptBox) {
@@ -182,26 +179,6 @@ internals.start = async function () {
     }
 
     /**
-     * Read ISB public signing key from the ISB JWKS endpoint and store it to keyStore
-     *
-     * @return {Promise<string>} signing key for ISB
-     */
-    async function getISBSigningKey(): Promise<string> {
-        const isbKeyInfo = await httpGetJson(`https://${isbHost}/jwks/broker`, true, null ) as object;
-        return await jose.JWK.asKeyStore(isbKeyInfo)
-        .then((keyStore) => {
-            // set refresh time one hour from now.
-            isbSigningKeyRefreshTime = Date.now() + 1000 * 60 * 60;
-            return keyStore;
-        })
-        .catch((err) => {
-            logger.error("dsp.getISBSigningKey.fail", `getting ISB signing key failed: ${<string>err.message}`,
-                logger.LogGroup.Technical, undefined);
-            return null;
-        });
-    }
-
-    /**
      * Try decrypting and verifying the token with the key we have.
      *
      * @param {string} token encypted and signed JSON web token (ID Token)
@@ -220,7 +197,10 @@ internals.start = async function () {
             try {
                 if (Date.now() > isbSigningKeyRefreshTime) {
                     // Refresh ISB signing key
-                    isbKeyStore = await getISBSigningKey();
+                    let exp: number;
+                    [isbKeyStore, exp] = await getISBSigningKey(privateKeys,isbHost);
+                    // set refresh time according to ISB JWKS exp
+                    isbSigningKeyRefreshTime = exp * 1000;
                 }
                 const verificationResult = await jose.JWS.createVerify(isbKeyStore).verify(decrypted);
                 return verificationResult.payload.toString();
@@ -452,6 +432,9 @@ internals.start = async function () {
             const hosted = true;
             const landing = !profile && !error;
 
+            const lang = request.query.lang ? <string>request.query.lang : "en";
+            request.yar.set("lang", lang);
+
             const returnUrl = "/";
             return h.view(
                 "template",
@@ -482,7 +465,13 @@ internals.start = async function () {
             if (error === null && profile === null ) {
                 const embeddedUri = `https://${isbHost}/api/embedded-ui/${clientId}?lang=${lang}`;
                 try {
-                    const embeddedDataString: string = await httpGetJson(embeddedUri, false, null ) as string;
+                    const embeddedDataString: string = await httpGetJson(
+                        embeddedUri,
+                        false,
+                        {
+                            "Content-Type": "application/json"
+                        }
+                    ) as string;
                     embeddedInfo = JSON.parse(embeddedDataString
                         .replace(/<(?:.|\n)*?>/gm, "") // Remove html tags
                         // replace \r and \n with <br><br> to handle multi-line disturbance notifications
@@ -511,9 +500,18 @@ internals.start = async function () {
 
     server.route({
         method: "GET",
-        path: "/jwks",
+        path: "/signed-jwks",
         handler: async (request, h) => {
-            return h.response(await getJwks()).type("application/json");
+            return h.response(await getSignedJwks(privateKeys, request.info.host)).type("application/jose");
+        }
+    });
+
+    server.route({
+        method: "GET",
+        path: "/.well-known/openid-federation",
+        handler: async (request, h) => {
+            return h.response(await getEntityStatement(privateKeys,request.info.host))
+            .type("application/entity-statement+jwt");
         }
     });
 
@@ -531,7 +529,7 @@ internals.start = async function () {
     server.route({
         method: "GET",
         path: "/robots.txt",
-        handler: (req, h) => {
+        handler: (_req, h) => {
             return h
                 .response("User-agent: *\nDisallow: /\n")
                 .type("text/plain");

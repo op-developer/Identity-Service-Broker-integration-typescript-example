@@ -2,9 +2,9 @@ import * as fs from "fs";
 import * as http from "http";
 import * as https from "https";
 import i18next from "i18next";
-import * as Joi from "@hapi/joi";
+import * as Joi from "joi";
 
-import logger = require("checkout-logger");
+import * as logger from "checkout-logger";
 
 export interface IdentityProvider {
     readonly name: string;
@@ -22,6 +22,13 @@ export interface EmbeddedUIData {
     readonly isbProviderInfo: string;
     readonly isbConsent: string;
     readonly disturbanceInfo?: DisturbanceInfo;
+}
+
+export interface DspPrivateKeys {
+    readonly signingKey: string;
+    readonly encyptionKey: string;
+    readonly entityKey: string;
+    readonly isbEntitySigningKey: string;
 }
 
 export const embeddedInfoSchema = Joi.object().keys({
@@ -59,10 +66,12 @@ export async function httpGetJson(
     // eslint-disable-next-line functional/no-return-void
     return new Promise<any>((accept, reject) => {
         const parsedUrl: URL = new URL(endpointUrl);
+        const queryParams: string = parsedUrl.searchParams.toString() ?
+            `?${parsedUrl.searchParams.toString()}` : "";
         const options: http.RequestOptions = {
             hostname: parsedUrl.hostname,
             port: parsedUrl.port ? Number(parsedUrl.port) : 443,
-            path: parsedUrl.pathname,
+            path: parsedUrl.pathname + queryParams,
             method: "GET",
             timeout: 5000,  // 5 seconds
             headers: {
@@ -285,11 +294,6 @@ export function translate(text: string): string {
     return i18next.t(text);
 }
 
-export interface DspPrivateKeys {
-    readonly signingKey: String;
-    readonly encyptionKey: String;
-}
-
 /**
 * Loads DSP keys from file
 *
@@ -303,7 +307,9 @@ export function getDSPKeys(logSpan?: logger.LogSpan): Promise<DspPrivateKeys> {
     try {
         const privateKeys: DspPrivateKeys = {
             encyptionKey: fs.readFileSync("keys/sandbox-sp-key.pem").toString(),
-            signingKey: fs.readFileSync("keys/sp-signing-key.pem").toString()
+            signingKey: fs.readFileSync("keys/sp-signing-key.pem").toString(),
+            entityKey: fs.readFileSync("keys/sandbox-sp-entity-signing-key.pem").toString(),
+            isbEntitySigningKey: fs.readFileSync("keys/sandbox-isb-entity-signing-pubkey.pem").toString(),
         };
         return Promise.resolve(privateKeys);
     } catch (error) {
