@@ -24,7 +24,8 @@ interface JwksKeys {
     readonly keys: ReadonlyArray<JwksKey>;
 }
 
-const ENTITY_EXP_TIME = 90000; // 25 hours
+const ENTITY_EXP_TIME = 10 * 365 * 24 * 60 * 60; // 3650 days ~ 10 years
+const JWKS_EXP_TIME = 90000; // 25 hours
 export const SIGN_ALGS = ["RS256"];
 
 /**
@@ -73,7 +74,7 @@ export async function getSignedJwks(
             iss: `https://${host}`,
             sub: `https://${host}`,
             iat: now,
-            exp: now + ENTITY_EXP_TIME
+            exp: now + JWKS_EXP_TIME
         };
 
         const jwksJsonString = JSON.stringify(jwksToSign);
