@@ -172,7 +172,7 @@ export async function getEntityStatement(
             `https://${isbHost}/jwks/broker-signed`,
             false,
             {
-                "Content-Type": "application/jose"
+                "Content-Type": "application/jwk-set+jwt"
             }
         ) as JwksData;
         logger.debug("dsp.getISBSigningKey", "ISB JWKS JWS",

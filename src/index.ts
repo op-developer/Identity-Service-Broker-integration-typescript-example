@@ -502,7 +502,7 @@ internals.start = async function () {
         method: "GET",
         path: "/signed-jwks",
         handler: async (request, h) => {
-            return h.response(await getSignedJwks(privateKeys, request.info.host)).type("application/jose");
+            return h.response(await getSignedJwks(privateKeys, request.info.host)).type("application/jwk-set+jwt");
         }
     });
 
