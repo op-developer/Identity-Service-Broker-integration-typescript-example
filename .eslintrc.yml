@@ -29,6 +29,10 @@ rules:
     - off
   'functional/immutable-data':
     - off #might be a good idea to turn on
+  'functional/type-declaration-immutability':
+    - off
+  'functional/prefer-immutable-types':
+    - off
   '@typescript-eslint/no-unused-vars':
     - off
   '@typescript-eslint/no-inferrable-types':
@@ -53,7 +57,7 @@ rules:
     - off
   # these are on
   functional/no-return-void: error
-  functional/no-loop-statement: error
+  functional/no-loop-statements: error
   eqeqeq: error
   quotes:
     - error
