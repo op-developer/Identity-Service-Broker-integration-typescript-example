@@ -1,4 +1,4 @@
-FROM node:16.19-bullseye
+FROM node:18.18-bookworm
 EXPOSE 80
 
 WORKDIR /opt/app

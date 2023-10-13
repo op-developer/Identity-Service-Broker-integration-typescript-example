@@ -85,6 +85,7 @@ export async function httpGetJson(
             let result = "";
             // eslint-disable-next-line functional/no-return-void
             response.on("data", (chunk: Buffer) => {
+                // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
                 result += chunk;
             });
             // eslint-disable-next-line functional/no-return-void
@@ -217,6 +218,7 @@ export async function httpPostFormUrlEncoded(
            let result = "";
            // eslint-disable-next-line functional/no-return-void
            response.on("data", (chunk: Buffer) => {
+               // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
                result += chunk;
            });
            // eslint-disable-next-line functional/no-return-void
