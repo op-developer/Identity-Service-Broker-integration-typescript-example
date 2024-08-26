@@ -85,7 +85,6 @@ export async function httpGetJson(
             let result = "";
             // eslint-disable-next-line functional/no-return-void
             response.on("data", (chunk: Buffer) => {
-                // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
                 result += chunk;
             });
             // eslint-disable-next-line functional/no-return-void
@@ -100,7 +99,7 @@ export async function httpGetJson(
                               { status_code: response.statusCode });
                     reject(new Error(response.statusMessage));
                 } else {
-                    let finalResult: Object;
+                    let finalResult: object | string;
                     try {
                         if (parseResult) {
                             finalResult = JSON.parse(result);
@@ -111,7 +110,7 @@ export async function httpGetJson(
                     catch (error) {
                         logger.error("dsp.http-get.response.faulty", <string>error.toString(),
                             logger.LogGroup.Technical, undefined, {result, endpointUrl });
-                        return reject(error);
+                        return reject(new Error(error.message as string));
                     }
                     accept(finalResult);
                 }
@@ -146,7 +145,7 @@ export async function httpGetJson(
         } catch (err) {
             logger.error("dsp.http-get.response.error", <string>err.toString(), logger.LogGroup.Technical,
                           undefined, {endpointUrl});
-            return reject(err);
+            return reject(new Error(err.message as string));
         }
     });
 }
@@ -218,12 +217,11 @@ export async function httpPostFormUrlEncoded(
            let result = "";
            // eslint-disable-next-line functional/no-return-void
            response.on("data", (chunk: Buffer) => {
-               // eslint-disable-next-line @typescript-eslint/restrict-plus-operands
                result += chunk;
            });
            // eslint-disable-next-line functional/no-return-void
            response.on("end", () => {
-               let finalResult: Object;
+               let finalResult: object;
                try {
                    finalResult = JSON.parse(result);
                }
@@ -237,7 +235,7 @@ export async function httpPostFormUrlEncoded(
                            error: error.message
                        }
                    );
-                   return reject(error);
+                   return reject(new Error(error.message as string));
                }
                accept(finalResult);
            });
@@ -281,7 +279,7 @@ export async function httpPostFormUrlEncoded(
            });
            req.end();
        } catch (err) {
-           return reject(err);
+           return reject(new Error(err.message as string));
        }
    });
 }

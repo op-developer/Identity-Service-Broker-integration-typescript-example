@@ -1,6 +1,8 @@
 import * as logger from "checkout-logger";
 import Crypto from "crypto-random-string";
+import * as Handlebars from "handlebars";
 import * as Hapi from "@hapi/hapi";
+import * as Yar from "@hapi/yar";
 import i18next from "i18next";
 import i18nBackend from "i18next-fs-backend";
 import * as jose from "node-jose";
@@ -34,7 +36,7 @@ internals.start = async function () {
     // Register Hapi plugins
     try {
         await server.register({
-            plugin: require("@hapi/yar"),
+            plugin: Yar,
             options: {
                 storeBlank: false,
                 cookieOptions: {
@@ -218,7 +220,7 @@ internals.start = async function () {
 
     // init Handlebars
     const manager = server.views({
-        engines: { hbs: require("handlebars") },
+        engines: { hbs: Handlebars },
         path: "templates",
         partialsPath: "templates/partials",
         relativeTo: __dirname
