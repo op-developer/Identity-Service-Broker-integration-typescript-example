@@ -1,7 +1,8 @@
+import assert from "assert";
 import * as jose from "node-jose";
 import * as logger from "checkout-logger";
+
 import {DspPrivateKeys, httpGetJson} from "./utils";
-import assert = require("assert");
 
 interface JwksData {
     readonly keys:  ReadonlyArray<JwksKey>;
