@@ -1,8 +1,20 @@
+# Service Provider integration example for the OP Identity Service Broker - TypeScript
+
+This repository provides an easy way to test OP identification services. It also serves as a TypeScript-based implementation example to help Service Providers (SP) integrate to the OP Identity Service Broker (ISB).
+
+This example is a demo service provider, which runs in a Docker container and connects to the OP ISB sandbox environment.
+
+This demo service provider gives you two different examples on how to integrate to the OP Identity Service Broker:
+- Using OP's hosted Identification UI
+- Using an Embedded identification UI with buttons
+
+## OP's hosted Identification UI
+
+In this example the Identification UI is hosted by the OP's Identity Service Broker. Authorization is started by clicking the "Identify Yourself" - button shown on the UI.
+
+## Embedded identification UI with buttons
+
 In this example the Identification UI is embedded into the Demo Service Provider. Authorization request is sent by clicking one of the Identity Provider buttons shown on the UI.
-
-## Embedded identification UI with dropdown
-
-In this example the Identification UI is embedded into the Demo Service Provider. Authorization request is sent by by choosing an Identity Provider from the dropdown menu shown on the UI.
 
 ## Additional parameters for testing purposes
 
