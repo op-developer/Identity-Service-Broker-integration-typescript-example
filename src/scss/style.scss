@@ -1,6 +1,8 @@
+@use "sass:color";
+@use "sass:map";
+@use "sass:meta";
+@use 'alert';
 @import url('https://fonts.googleapis.com/css?family=Source+Code+Pro|Source+Sans+Pro:400,700|Source+Serif+Pro');
-@import 'vars';
-@import 'alert';
 
 $color: (
   bg: #FFFFFF,
@@ -10,12 +12,12 @@ $color: (
 );
 
 @function color($name, $type: regular) {
-  $c: map-get($color, $name);
+  $c: map.get($color, $name);
 
   @if $type == regular {
     @return $c;
   } @if $type == hilight {
-    @return mix($c, color(bg), 80%);
+    @return color.mix($c, color(bg), 80%);
   }
 }
 
@@ -30,7 +32,7 @@ $space: (
 );
 
 @function space($name) {
-  @return map-get($space, $name);
+  @return map.get($space, $name);
 }
 
 $style: (
@@ -38,7 +40,7 @@ $style: (
 );
 
 @function style($name) {
-  @return map-get($style, $name);
+  @return map.get($style, $name);
 }
 
 html, body {
