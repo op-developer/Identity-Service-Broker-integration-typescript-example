@@ -14,6 +14,24 @@ import {
     HttpPostUrlEncodedData, httpPostFormUrlEncoded, translate, DspPrivateKeys
 } from "./utils";
 import { getEntityStatement, getISBSigningKey, getSignedJwks } from "./key-management";
+import { YarValKeys } from "@hapi/yar";
+
+interface Profile {
+    readonly iss: string;
+    readonly sub: string;
+    readonly aud: string;
+    readonly exp: number;
+    readonly iat: number;
+    readonly acr: string;
+    readonly nonce: string;
+    readonly name: string;
+    readonly given_name: string;
+    readonly family_name: string;
+    readonly birthdate?: string;
+    readonly personal_identity_code: string;
+    readonly auth_time: number;
+    readonly [key:string]: any;
+}
 
 interface TokenResponse {
     readonly id_token: string;
@@ -157,7 +175,7 @@ internals.start = async function () {
         if (request.yar.get("lang")) {
             payload["ui_locales"] = request.yar.get("lang"); // set language
             // set also localised ftn_spname
-            payload["ftn_spname"] = spnameJson[request.yar.get("lang")] || spnameJson.en;
+            payload["ftn_spname"] = spnameJson[request.yar.get("lang") as YarValKeys] || spnameJson.en;
         }
 
         if (request.query.promptBox) {
@@ -418,7 +436,7 @@ internals.start = async function () {
         method: "GET",
         path: "/",
         handler: (request, h) => {
-            const profile = request.yar.get("profile");
+            const profile: Profile = request.yar.get("profile");
             const error = request.yar.get("error");
             const errorDescription = request.yar.get("errorDescription");
             request.yar.clear("error");
@@ -449,7 +467,7 @@ internals.start = async function () {
         method: "GET",
         path: "/embedded",
         handler: async (request, h) => {
-            const profile = request.yar.get("profile");
+            const profile: Profile = request.yar.get("profile");
             let error = request.yar.get("error");
             let errorDescription = request.yar.get("errorDescription");
             request.yar.clear("error");

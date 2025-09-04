@@ -1,4 +1,4 @@
-FROM node:22.14-bookworm
+FROM node:22.18-trixie
 EXPOSE 80
 
 WORKDIR /opt/app
