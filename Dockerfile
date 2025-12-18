@@ -1,4 +1,4 @@
-FROM node:22.21-trixie
+FROM node:24.11-trixie
 EXPOSE 80
 
 WORKDIR /opt/app
