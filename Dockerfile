@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: Copyright 2026 OP Pohjola (https://op.fi)
+#
+# SPDX-License-Identifier: MIT
+
 FROM node:24.11-trixie
 EXPOSE 80
 

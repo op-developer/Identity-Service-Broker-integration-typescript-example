@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: Copyright 2026 OP Pohjola (https://op.fi)
+//
+// SPDX-License-Identifier: MIT
+
 import tseslint from "typescript-eslint";
 import functional from "eslint-plugin-functional";
 import globals from "globals";
