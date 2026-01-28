@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: Copyright 2026 OP Pohjola (https://op.fi)
+//
+// SPDX-License-Identifier: MIT
+
 import * as fs from "fs";
 import * as http from "http";
 import * as https from "https";
@@ -318,4 +322,3 @@ export function getDSPKeys(logSpan?: logger.LogSpan): Promise<DspPrivateKeys> {
         throw error;
     }
 }
-
