@@ -1,3 +1,4 @@
+FROM node:24.14-trixie
 # SPDX-FileCopyrightText: Copyright 2026 OP Pohjola (https://op.fi)
 #
 # SPDX-License-Identifier: MIT
