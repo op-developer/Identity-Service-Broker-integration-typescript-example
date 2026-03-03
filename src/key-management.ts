@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: Copyright 2026 OP Pohjola (https://op.fi)
+//
+// SPDX-License-Identifier: MIT
+
 import assert from "assert";
 import * as jose from "node-jose";
 import * as logger from "checkout-logger";

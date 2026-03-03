@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: Copyright 2026 OP Pohjola (https://op.fi)
+//
+// SPDX-License-Identifier: MIT
+
 import * as logger from "checkout-logger";
 import Crypto from "crypto-random-string";
 import * as Handlebars from "handlebars";

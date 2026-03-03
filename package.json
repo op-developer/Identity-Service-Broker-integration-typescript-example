@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "repository": {},
-  "license": "UNLICENSED",
+  "license": "MIT",
   "scripts": {
     "lint": "eslint \"src/**/*.ts\"",
     "start": "node ./dist/index.js",
