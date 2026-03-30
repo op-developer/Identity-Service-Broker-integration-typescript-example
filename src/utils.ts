@@ -8,7 +8,7 @@ import * as https from "https";
 import i18next from "i18next";
 import * as Joi from "joi";
 
-import * as logger from "checkout-logger";
+import * as logger from "5w-logger";
 
 export interface IdentityProvider {
     readonly name: string;

@@ -4,7 +4,7 @@
 
 import assert from "assert";
 import * as jose from "node-jose";
-import * as logger from "checkout-logger";
+import * as logger from "5w-logger";
 
 import {DspPrivateKeys, httpGetJson} from "./utils";
 
