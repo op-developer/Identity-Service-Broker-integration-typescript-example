@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: MIT
 
-import * as logger from "checkout-logger";
+import * as logger from "5w-logger";
 import Crypto from "crypto-random-string";
 import * as Handlebars from "handlebars";
 import * as Hapi from "@hapi/hapi";
