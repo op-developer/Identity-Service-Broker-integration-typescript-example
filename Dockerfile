@@ -1,9 +1,8 @@
-FROM node:24.14-trixie
 # SPDX-FileCopyrightText: Copyright 2026 OP Pohjola (https://op.fi)
 #
 # SPDX-License-Identifier: MIT
 
-FROM node:24.11-trixie
+FROM node:24.15-trixie
 EXPOSE 80
 
 WORKDIR /opt/app
