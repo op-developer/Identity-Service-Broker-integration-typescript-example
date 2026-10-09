@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: MIT
 
-FROM node:24.15-trixie
+FROM node:24.21-trixie
 EXPOSE 80
 
 WORKDIR /opt/app

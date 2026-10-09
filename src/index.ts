@@ -9,15 +9,15 @@ import * as Hapi from "@hapi/hapi";
 import * as Yar from "@hapi/yar";
 import i18next from "i18next";
 import i18nBackend from "i18next-fs-backend";
-import * as jose from "node-jose";
+import { CompactSign, compactDecrypt, createLocalJWKSet, importPKCS8, jwtVerify } from "jose";
 import * as uuid from "uuid";
 import * as Vision from "@hapi/vision";
 import * as Inert from "@hapi/inert";
 import {
     getDSPKeys, httpGetJson, EmbeddedUIData, embeddedInfoSchema,
-    HttpPostUrlEncodedData, httpPostFormUrlEncoded, translate, DspPrivateKeys
+    HttpPostUrlEncodedData, httpPostFormUrlEncoded, translate, DspPrivateKeys, toPkcs8Pem
 } from "./utils";
-import { getEntityStatement, getISBSigningKey, getSignedJwks } from "./key-management";
+import { getEntityStatement, getISBSigningKey, getKeyId, getSignedJwks, SIGN_ALGS } from "./key-management";
 import { YarValKeys } from "@hapi/yar";
 
 interface Profile {
@@ -110,7 +110,7 @@ internals.start = async function () {
     // the refresh time for the isbSigningKey
     let isbSigningKeyRefreshTime: number = 0;
     // The JWKS key store for the ISB signing key
-    let isbKeyStore: jose.JWK.KeyStore;
+    let isbKeyStore: ReturnType<typeof createLocalJWKSet>;
 
     /**
      * date and time formatting options
@@ -147,8 +147,11 @@ internals.start = async function () {
             exp: Math.floor(Date.now() / 1000) + 10 * 60
         };
         const payloadJSON = JSON.stringify(payload);
-        const signingKey = await jose.JWK.asKey(privateKeys.signingKey, "pem");
-        return <string>jose.JWS.createSign({ format: "compact" }, signingKey).final(payloadJSON, "utf-8");
+        const signingKey = await importPKCS8(toPkcs8Pem(privateKeys.signingKey), "RS256");
+        const kid = await getKeyId(privateKeys.signingKey);
+        return new CompactSign(Buffer.from(payloadJSON))
+            .setProtectedHeader({ alg: "RS256", kid })
+            .sign(signingKey);
     }
 
     /**
@@ -198,8 +201,11 @@ internals.start = async function () {
             }
         }
         const payloadJSON = JSON.stringify(payload);
-        const signingKey = await jose.JWK.asKey(privateKeys.signingKey, "pem");
-        return <string>jose.JWS.createSign({ format: "compact" }, signingKey).final(payloadJSON, "utf-8");
+        const signingKey = await importPKCS8(toPkcs8Pem(privateKeys.signingKey), "RS256");
+        const kid = await getKeyId(privateKeys.signingKey);
+        return new CompactSign(Buffer.from(payloadJSON))
+            .setProtectedHeader({ alg: "RS256", kid })
+            .sign(signingKey);
     }
 
     /**
@@ -209,13 +215,17 @@ internals.start = async function () {
      * @return {Promise<string>} decrypted and succesfully verified ID Token or error
      */
     async function decryptToken(token: string): Promise<string> {
+        let kid: string | undefined;
         try {
-            const privKey = await jose.JWK.asKey(privateKeys.encyptionKey, "pem");
+            kid = await getKeyId(privateKeys.encyptionKey);
+            const privKey = await importPKCS8(toPkcs8Pem(privateKeys.encyptionKey), "RSA-OAEP");
             logger.info("dsp.decrypting", "Decrypting with key", logger.LogGroup.Technical, undefined,
-                {kid: privKey.kid});
-            const decrypted = (await jose.JWE.createDecrypt(privKey)
-                        .decrypt(token)
-                        ).plaintext.toString();
+                {kid});
+            const { plaintext } = await compactDecrypt(token, privKey, {
+                keyManagementAlgorithms: ["RSA-OAEP"],
+                contentEncryptionAlgorithms: ["A128CBC-HS256"]
+            });
+            const decrypted = Buffer.from(plaintext).toString();
             logger.info("dsp.decrypting.ok", "Decrypt succeeded with key",
                 logger.LogGroup.Technical, undefined, {decrypted});
             try {
@@ -226,8 +236,20 @@ internals.start = async function () {
                     // set refresh time according to ISB JWKS exp
                     isbSigningKeyRefreshTime = exp * 1000;
                 }
-                const verificationResult = await jose.JWS.createVerify(isbKeyStore).verify(decrypted);
-                return verificationResult.payload.toString();
+                if (!isbHost || !clientId) {
+                    throw new Error("ISB_HOST and CLIENT_ID must be configured");
+                }
+                const verificationResult = await jwtVerify(decrypted, isbKeyStore, {
+                    algorithms: SIGN_ALGS,
+                    issuer: `https://${isbHost}`,
+                    audience: clientId,
+                    requiredClaims: ["iss", "aud", "exp", "iat"],
+                    maxTokenAge: 10 * 60
+                });
+                if (verificationResult.payload.exp - verificationResult.payload.iat > 10 * 60) {
+                    throw new Error("ID token expiration exceeds 10 minutes");
+                }
+                return JSON.stringify(verificationResult.payload);
             } catch (err) {
                 logger.error("dsp.verifying.fail", `Verification failed: ${<string>err.message}`,
                     logger.LogGroup.Technical, undefined);
@@ -236,7 +258,7 @@ internals.start = async function () {
         } catch (err) {
             logger.info("dsp.decrypting.keyfail", `decrypt failed: ${<string>err.message}`,
                 logger.LogGroup.Technical, undefined,
-                {error: err, token, key: privateKeys.encyptionKey});
+                {error: err, token, kid});
         }
     }
 
@@ -364,6 +386,8 @@ internals.start = async function () {
                             return decryptToken(tokenResponse.id_token)
                                 .then((result) => {
                                     const credentials = JSON.parse(result);
+                                    // This logs raw data of the ID Token.
+                                    // Make sure this does not expose sensitive information in production.
                                     logger.info(
                                         "dsp.tokenresponse.token", "token verification ok",
                                         logger.LogGroup.Technical, undefined, {results: result}
