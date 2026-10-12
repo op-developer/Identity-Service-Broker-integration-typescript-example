@@ -3,35 +3,35 @@
 // SPDX-License-Identifier: MIT
 
 import assert from "assert";
-import * as jose from "node-jose";
+import { createPrivateKey, createPublicKey, KeyObject } from "node:crypto";
+import {
+    calculateJwkThumbprint, CompactSign, compactVerify, createLocalJWKSet,
+    exportJWK, JWK
+} from "jose";
 import * as logger from "5w-logger";
 
 import {DspPrivateKeys, httpGetJson} from "./utils";
 
 interface JwksData {
-    readonly keys:  ReadonlyArray<JwksKey>;
+    readonly keys: ReadonlyArray<JWK>;
     readonly iss: string;
     readonly sub: string;
     readonly iat: number;
     readonly exp: number;
 }
 
-interface JwksKey {
-    readonly kty?: string;
-    readonly kid?: string;
-    readonly use?: string;
-    readonly n?: string;
-    readonly e?: string;
-    readonly [key: string]: any;
-}
-
 interface JwksKeys {
-    readonly keys: ReadonlyArray<JwksKey>;
+    readonly keys: ReadonlyArray<JWK>;
 }
 
 const ENTITY_EXP_TIME = 10 * 365 * 24 * 60 * 60; // 3650 days ~ 10 years
 const JWKS_EXP_TIME = 90000; // 25 hours
 export const SIGN_ALGS = ["RS256"];
+
+export async function getKeyId(privateKeyPem: string): Promise<string> {
+    const publicKey = await exportJWK(createPublicKey(privateKeyPem));
+    return calculateJwkThumbprint(publicKey);
+}
 
 /**
  * Get JWKS for the OIDC SP
@@ -45,11 +45,14 @@ export async function getJwks(
 ): Promise<JwksKeys> {
 
     const log = logSpan || new logger.LogSpan();
-    const keyStore = jose.JWK.createKeyStore();
     try {
-        await keyStore.add(privateKeys.signingKey, "pem", {use: "sig"});
-        await keyStore.add(privateKeys.encyptionKey, "pem", {use: "enc"});
-        return keyStore.toJSON();
+        const signingKey = await exportJWK(createPublicKey(privateKeys.signingKey));
+        const encryptionKey = await exportJWK(createPublicKey(privateKeys.encyptionKey));
+        signingKey.use = "sig";
+        encryptionKey.use = "enc";
+        signingKey.kid = await calculateJwkThumbprint(signingKey);
+        encryptionKey.kid = await calculateJwkThumbprint(encryptionKey);
+        return { keys: [signingKey, encryptionKey] };
     } catch (error) {
         log.error("dsp.jwks.error", <string>error.message,
             logger.LogGroup.Technical, undefined
@@ -83,11 +86,11 @@ export async function getSignedJwks(
         };
 
         const jwksJsonString = JSON.stringify(jwksToSign);
-        const signingKey = await jose.JWK.asKey(privateKeys.entityKey, "pem");
-        return await  jose.JWS.createSign(
-            { fields: {alg: "RS256"}, format: "compact"},
-            signingKey
-        ).final(jwksJsonString, "utf-8");
+        const signingKey = createPrivateKey(privateKeys.entityKey);
+        const kid = await getKeyId(privateKeys.entityKey);
+        return new CompactSign(Buffer.from(jwksJsonString))
+            .setProtectedHeader({ alg: "RS256", kid })
+            .sign(signingKey);
     } catch (error) {
         log.error("dsp.signedjwks.error", <string>error.message,
             logger.LogGroup.Technical, undefined
@@ -112,8 +115,10 @@ export async function getEntityStatement(
     const log = logSpan || new logger.LogSpan();
     try {
         const now = Math.floor(Date.now() / 1000);
-        const keyStore = jose.JWK.createKeyStore();
-        await keyStore.add(privateKeys.entityKey, "pem", {use: "sig"});
+        const entityKey = createPrivateKey(privateKeys.entityKey);
+        const entityJwk = await exportJWK(createPublicKey(privateKeys.entityKey));
+        entityJwk.use = "sig";
+        entityJwk.kid = await calculateJwkThumbprint(entityJwk);
         const entityStatement = {
             iss: `https://${host}`,
             sub: `https://${host}`,
@@ -138,14 +143,14 @@ export async function getEntityStatement(
                 }
             }
         };
-        entityStatement.jwks = keyStore.toJSON(); // add the public part of the signing key(s)
-        return await  jose.JWS.createSign(
-            { fields: {
+        entityStatement.jwks = { keys: [entityJwk] };
+        return new CompactSign(Buffer.from(JSON.stringify(entityStatement)))
+            .setProtectedHeader({
                 alg: "RS256",
+                kid: entityJwk.kid,
                 typ: "entity-statement+jwt"
-            }, format: "compact"},
-            keyStore.get(entityStatement.jwks.keys[0].kid, { use: "sig" }) // get the first signing key and use it
-        ).final(JSON.stringify(entityStatement), "utf-8");
+            })
+            .sign(entityKey);
     } catch (error) {
         log.error("dsp.entityStatement.error", <string>error.message,
             logger.LogGroup.Technical, undefined
@@ -165,12 +170,11 @@ export async function getEntityStatement(
     privateKeys: DspPrivateKeys,
     isbHost: string,
     logSpan?: logger.LogSpan
- ): Promise<readonly [string, number]> {
+ ): Promise<readonly [ReturnType<typeof createLocalJWKSet>, number]> {
     const log = logSpan || new logger.LogSpan();
 
-    let isbSignedJwksToken: JwksData;
-    let keystore: jose.IKeyStore;
-    const opts = {algorithms: SIGN_ALGS};
+    let isbSignedJwksToken: string;
+    let verificationKey: KeyObject;
     // read ISB JWKS JWS from the ISB signed-JWKS
     try {
         isbSignedJwksToken = await httpGetJson(
@@ -179,11 +183,10 @@ export async function getEntityStatement(
             {
                 "Content-Type": "application/jwk-set+jwt"
             }
-        ) as JwksData;
+        ) as string;
         logger.debug("dsp.getISBSigningKey", "ISB JWKS JWS",
             logger.LogGroup.Technical,undefined, {isbSignedJwksToken});
-        keystore = jose.JWK.createKeyStore();
-        await keystore.add(privateKeys.isbEntitySigningKey, "pem", {use: "sig"});
+        verificationKey = createPublicKey(privateKeys.isbEntitySigningKey);
     } catch (error) {
         logger.error("dsp.getISBSigningKey.fail", `reading ISB signed JWKS failed: ${<string>error.message}`,
             logger.LogGroup.Technical, undefined);
@@ -193,8 +196,10 @@ export async function getEntityStatement(
     let verifiedIsbSigningKeys: JwksData;
     // Verify signing of the ISB JWKS
     try {
-        const token = await jose.JWS.createVerify(keystore, opts).verify(isbSignedJwksToken);
-        verifiedIsbSigningKeys = JSON.parse(token.payload as string);
+        const token = await compactVerify(isbSignedJwksToken, verificationKey, {
+            algorithms: SIGN_ALGS
+        });
+        verifiedIsbSigningKeys = JSON.parse(Buffer.from(token.payload).toString());
     } catch (error) {
         logger.error("dsp.getISBSigningKey.fail", `verifing ISB signed JWKS failed: ${<string>error.message}`,
             logger.LogGroup.Technical, undefined);
@@ -211,13 +216,12 @@ export async function getEntityStatement(
         throw error;
     }
 
-    return await jose.JWK.asKeyStore({keys: verifiedIsbSigningKeys.keys})
-    .then((keyStore: jose.IKeyStore) => {
-        return [keyStore, verifiedIsbSigningKeys.exp];
-    })
-    .catch((error: Error) => {
+    try {
+        const keySet = createLocalJWKSet({ keys: [...verifiedIsbSigningKeys.keys] });
+        return [keySet, verifiedIsbSigningKeys.exp];
+    } catch (error) {
         logger.error("dsp.getISBSigningKey.fail", `storing ISB signing key to keystore failed: ${error.message}`,
             logger.LogGroup.Technical, undefined);
-            throw error;
-    });
+        throw error;
+    }
 }
