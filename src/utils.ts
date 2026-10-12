@@ -3,7 +3,6 @@
 // SPDX-License-Identifier: MIT
 
 import * as fs from "fs";
-import { createPrivateKey } from "crypto";
 import * as http from "http";
 import * as https from "https";
 import i18next from "i18next";
@@ -34,10 +33,6 @@ export interface DspPrivateKeys {
     readonly encyptionKey: string;
     readonly entityKey: string;
     readonly isbEntitySigningKey: string;
-}
-
-export function toPkcs8Pem(pem: string): string {
-    return createPrivateKey(pem).export({ type: "pkcs8", format: "pem" }).toString();
 }
 
 export const embeddedInfoSchema = Joi.object().keys({

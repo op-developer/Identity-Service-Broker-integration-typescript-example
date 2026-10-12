@@ -9,13 +9,14 @@ import * as Hapi from "@hapi/hapi";
 import * as Yar from "@hapi/yar";
 import i18next from "i18next";
 import i18nBackend from "i18next-fs-backend";
-import { CompactSign, compactDecrypt, createLocalJWKSet, importPKCS8, jwtVerify } from "jose";
+import { createPrivateKey } from "node:crypto";
+import { CompactSign, compactDecrypt, createLocalJWKSet, jwtVerify } from "jose";
 import * as uuid from "uuid";
 import * as Vision from "@hapi/vision";
 import * as Inert from "@hapi/inert";
 import {
     getDSPKeys, httpGetJson, EmbeddedUIData, embeddedInfoSchema,
-    HttpPostUrlEncodedData, httpPostFormUrlEncoded, translate, DspPrivateKeys, toPkcs8Pem
+    HttpPostUrlEncodedData, httpPostFormUrlEncoded, translate, DspPrivateKeys
 } from "./utils";
 import { getEntityStatement, getISBSigningKey, getKeyId, getSignedJwks, SIGN_ALGS } from "./key-management";
 import { YarValKeys } from "@hapi/yar";
@@ -147,7 +148,7 @@ internals.start = async function () {
             exp: Math.floor(Date.now() / 1000) + 10 * 60
         };
         const payloadJSON = JSON.stringify(payload);
-        const signingKey = await importPKCS8(toPkcs8Pem(privateKeys.signingKey), "RS256");
+        const signingKey = createPrivateKey(privateKeys.signingKey);
         const kid = await getKeyId(privateKeys.signingKey);
         return new CompactSign(Buffer.from(payloadJSON))
             .setProtectedHeader({ alg: "RS256", kid })
@@ -201,7 +202,7 @@ internals.start = async function () {
             }
         }
         const payloadJSON = JSON.stringify(payload);
-        const signingKey = await importPKCS8(toPkcs8Pem(privateKeys.signingKey), "RS256");
+        const signingKey = createPrivateKey(privateKeys.signingKey);
         const kid = await getKeyId(privateKeys.signingKey);
         return new CompactSign(Buffer.from(payloadJSON))
             .setProtectedHeader({ alg: "RS256", kid })
@@ -218,7 +219,7 @@ internals.start = async function () {
         let kid: string | undefined;
         try {
             kid = await getKeyId(privateKeys.encyptionKey);
-            const privKey = await importPKCS8(toPkcs8Pem(privateKeys.encyptionKey), "RSA-OAEP");
+            const privKey = createPrivateKey(privateKeys.encyptionKey);
             logger.info("dsp.decrypting", "Decrypting with key", logger.LogGroup.Technical, undefined,
                 {kid});
             const { plaintext } = await compactDecrypt(token, privKey, {

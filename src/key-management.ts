@@ -3,14 +3,14 @@
 // SPDX-License-Identifier: MIT
 
 import assert from "assert";
-import { createPublicKey } from "node:crypto";
+import { createPrivateKey, createPublicKey, KeyObject } from "node:crypto";
 import {
     calculateJwkThumbprint, CompactSign, compactVerify, createLocalJWKSet,
-    exportJWK, importPKCS8, importSPKI, JWK
+    exportJWK, JWK
 } from "jose";
 import * as logger from "5w-logger";
 
-import {DspPrivateKeys, httpGetJson, toPkcs8Pem} from "./utils";
+import {DspPrivateKeys, httpGetJson} from "./utils";
 
 interface JwksData {
     readonly keys: ReadonlyArray<JWK>;
@@ -86,7 +86,7 @@ export async function getSignedJwks(
         };
 
         const jwksJsonString = JSON.stringify(jwksToSign);
-        const signingKey = await importPKCS8(toPkcs8Pem(privateKeys.entityKey), "RS256");
+        const signingKey = createPrivateKey(privateKeys.entityKey);
         const kid = await getKeyId(privateKeys.entityKey);
         return new CompactSign(Buffer.from(jwksJsonString))
             .setProtectedHeader({ alg: "RS256", kid })
@@ -115,7 +115,7 @@ export async function getEntityStatement(
     const log = logSpan || new logger.LogSpan();
     try {
         const now = Math.floor(Date.now() / 1000);
-        const entityKey = await importPKCS8(toPkcs8Pem(privateKeys.entityKey), "RS256");
+        const entityKey = createPrivateKey(privateKeys.entityKey);
         const entityJwk = await exportJWK(createPublicKey(privateKeys.entityKey));
         entityJwk.use = "sig";
         entityJwk.kid = await calculateJwkThumbprint(entityJwk);
@@ -174,7 +174,7 @@ export async function getEntityStatement(
     const log = logSpan || new logger.LogSpan();
 
     let isbSignedJwksToken: string;
-    let verificationKey: Awaited<ReturnType<typeof importSPKI>>;
+    let verificationKey: KeyObject;
     // read ISB JWKS JWS from the ISB signed-JWKS
     try {
         isbSignedJwksToken = await httpGetJson(
@@ -186,7 +186,7 @@ export async function getEntityStatement(
         ) as string;
         logger.debug("dsp.getISBSigningKey", "ISB JWKS JWS",
             logger.LogGroup.Technical,undefined, {isbSignedJwksToken});
-        verificationKey = await importSPKI(privateKeys.isbEntitySigningKey, "RS256");
+        verificationKey = createPublicKey(privateKeys.isbEntitySigningKey);
     } catch (error) {
         logger.error("dsp.getISBSigningKey.fail", `reading ISB signed JWKS failed: ${<string>error.message}`,
             logger.LogGroup.Technical, undefined);
